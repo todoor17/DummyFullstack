@@ -37,8 +37,8 @@ def authenticate_user(username: str, password: str, db: Session = Depends(get_db
     return user
 
 
-def create_access_token(username: str, user_id: int, expires_delta: timedelta = None):
-    encode = {"sub": username, "id": user_id}
+def create_access_token(username: str, user_id: int, role: str, expires_delta: timedelta = None):
+    encode = {"sub": username, "id": user_id, "role": role}
     expires = datetime.now() + expires_delta
 
     encode.update({"exp": expires})
@@ -47,5 +47,5 @@ def create_access_token(username: str, user_id: int, expires_delta: timedelta = 
 @router.post("/login", status_code=status.HTTP_200_OK, tags=["2. Login"])
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]):
     user = authenticate_user(username=form_data.username, password=form_data.password, db=db)
-    token = create_access_token(username=form_data.username, user_id=user.id, expires_delta=timedelta(days=1))
+    token = create_access_token(username=form_data.username, user_id=user.id, role=user.role, expires_delta=timedelta(minutes=1))
     return {"user": user, "token": token}

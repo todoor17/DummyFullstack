@@ -23,7 +23,7 @@ def check_valid_token(token: str):
     if not decoded:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    if not decoded["id"] == 1:
+    if not decoded["role"] == "ADMIN":
         raise HTTPException(status_code=401, detail="You don't have the rights to add a car")
 
     elif decoded["exp"] < datetime.now().timestamp():
