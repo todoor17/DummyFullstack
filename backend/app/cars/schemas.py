@@ -11,8 +11,6 @@ class CarBase(BaseModel):
     car_color: str = Field(description="Car Color")
     owner: int = Field(description="Owner ID")
 
-    class Config:
-        orm_mode = True
 
 class CreateCarRequest(BaseModel):
     brand: str = Field(description="Brand Name")

@@ -1,38 +1,20 @@
-from datetime import datetime
-
-from fastapi import APIRouter, HTTPException
-from fastapi.params import Depends, Header
+from fastapi import APIRouter, Security
+from fastapi.params import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
-from starlette import status
 
+from app.auth.auth import check_valid_token
 from app.cars.model import Car
-from app.cars.schemas import CreateCarRequest, CarBase
+from app.cars.schemas import CreateCarRequest
 from app.database import get_db
 
-from jose import jwt
-
-import os
-
-SECRET_KEY = os.getenv("JWT_KEY")
-ALGORITHM = os.getenv("JWT_ALG")
 router = APIRouter()
-
-def check_valid_token(token: str):
-    decoded = jwt.decode(token, key=SECRET_KEY, algorithms=ALGORITHM)
-
-    if not decoded:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-
-    if not decoded["role"] == "ADMIN":
-        raise HTTPException(status_code=401, detail="You don't have the rights to add a car")
-
-    elif decoded["exp"] < datetime.now().timestamp():
-        raise HTTPException(status_code=401, detail="Your token is expired. Login again")
-
+security = HTTPBearer()
 
 @router.post("/create-car", tags=["2. Cars"])
-async def create_car(request: CreateCarRequest, token: str = Header(...), db: Session = Depends(get_db)):
-    check_valid_token(token)
+async def create_car(request: CreateCarRequest, credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
+    token = credentials.credentials
+    check_valid_token(token, "ADMIN")
 
     car = Car(brand=request.brand, mileage=request.mileage, nr_of_seats=0, car_color=request.car_color, owner=request.owner)
     db.add(car)
